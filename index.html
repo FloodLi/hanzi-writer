@@ -2,15 +2,20 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <title>汉字笔顺 · 田字格</title>
 <style>
   /* 为 Kindle 电子墨水屏设计：纯黑白、高对比、无动画、大按钮 */
   html, body { margin: 0; padding: 0; background: #fff; color: #000;
     font-family: "Songti SC", SimSun, serif; }
-  #wrap { width: 580px; margin: 0 auto; padding: 4px 0; text-align: center; }
-  #bar input { font-size: 26px; width: 4em; padding: 4px; text-align: center;
-    border: 2px solid #000; background: #fff; }
+  #wrap { width: 100%; max-width: 600px; margin: 0 auto; padding: 4px 0; text-align: center; }
+  #bar input, #bar button { box-sizing: border-box; height: 48px; margin: 0 2px;
+    vertical-align: middle; font-size: 26px; border: 2px solid #000; }
+  #bar input { width: 380px; padding: 0 8px; text-align: center; background: #fff;
+    border-radius: 6px; }
+  #bar button { padding: 0 20px; }
   button { font-size: 22px; padding: 6px 12px; margin: 3px 2px; background: #fff;
     color: #000; border: 2px solid #000; border-radius: 6px; }
   button.on { background: #000; color: #fff; }
@@ -207,7 +212,18 @@
     chars = a; show(0);
   }
 
-  $("go").onclick = go;
+  // 禁止缩放，并尽量全屏（隐藏地址栏）
+  document.addEventListener("gesturestart", function (e) { e.preventDefault(); }, false);
+  function fullscreen() {
+    var el = document.documentElement;
+    var f = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitRequestFullScreen ||
+            el.mozRequestFullScreen || el.msRequestFullscreen;
+    try { if (f) f.call(el); } catch (e) {}
+    window.scrollTo(0, 1);
+  }
+  window.onload = function () { setTimeout(function () { window.scrollTo(0, 1); }, 100); };
+
+  $("go").onclick = function () { fullscreen(); go(); };
   $("txt").onkeydown = function (e) { if ((e.keyCode || e.which) === 13) go(); };
   $("chars").onclick = function (e) {
     var t = e.target || e.srcElement;
