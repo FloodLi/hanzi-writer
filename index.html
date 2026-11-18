@@ -8,33 +8,36 @@
 <title>汉字笔顺 · 田字格</title>
 <style>
   /* 为 Kindle 电子墨水屏设计：纯黑白、高对比、无动画、大按钮 */
-  html, body { margin: 0; padding: 0; background: #fff; color: #000;
-    font-family: "Songti SC", SimSun, serif; }
-  #wrap { width: 100%; max-width: 600px; margin: 0 auto; padding: 4px 0; text-align: center; }
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+    background: #fff; color: #000; font-family: "Songti SC", SimSun, serif; }
+  #wrap { width: 100%; height: 100%; overflow: hidden; padding: 4px 0; text-align: center;
+    box-sizing: border-box; }
+  form { margin: 0; padding: 0; }
   #bar input, #bar button { box-sizing: border-box; height: 48px; margin: 0 2px;
     vertical-align: middle; font-size: 26px; border: 2px solid #000; }
-  #bar input { width: 380px; padding: 0 8px; text-align: center; background: #fff;
+  #bar input { width: 200px; padding: 0 8px; text-align: center; background: #fff;
     border-radius: 6px; }
   #bar button { padding: 0 20px; }
   button { font-size: 22px; padding: 6px 12px; margin: 3px 2px; background: #fff;
     color: #000; border: 2px solid #000; border-radius: 6px; }
   button.on { background: #000; color: #fff; }
-  #board { width: 400px; height: 400px; margin: 6px auto; border: 2px solid #000; }
-  #board canvas { display: block; }
+  #board { width: 396px; height: 396px; margin: 6px auto; border: 2px solid #000; }
+  #board canvas { display: block; width: 100%; height: 100%; }
   #info { font-size: 20px; margin: 2px 0; height: 1.4em; overflow: hidden; }
   #chars { margin: 2px 0; }
   #steps { margin-top: 6px; text-align: left; font-size: 0; }
-  .step { display: inline-block; width: 90px; height: 90px; margin: 3px 4px;
+  #steps { overflow: hidden; }
+  .step { display: inline-block; width: 15%; margin: 0.6% 0.8%;
     border: 1px solid #000; vertical-align: top; }
-  .step canvas { display: block; }
+  .step canvas { display: block; width: 100%; height: auto; }
 </style>
 </head>
 <body>
 <div id="wrap">
-  <div id="bar">
-    <input id="txt" type="text" value="" maxlength="8">
-    <button id="go">显示</button>
-  </div>
+  <form id="bar" action="#" onsubmit="return false;">
+    <input id="txt" type="text" value="" maxlength="8" autocomplete="off" autocorrect="off" autocapitalize="off">
+    <button id="go" type="button">显示</button>
+  </form>
   <div id="chars"></div>
   <div id="board"><canvas id="cv" width="396" height="396"></canvas></div>
   <div id="info"></div>
@@ -196,7 +199,7 @@
       d.paths = d.paths || [];
       if (!d.paths.length) for (var j = 0; j < d.strokes.length; j++) d.paths.push(parsePath(d.strokes[j]));
       data = d; step = 0;
-      render(); buildSteps();
+      render(); buildSteps(); fit();
       if (startPlayRef) startPlayRef();
     });
   }
@@ -212,19 +215,37 @@
     chars = a; show(0);
   }
 
-  // 禁止缩放，并尽量全屏（隐藏地址栏）
+  // 禁止缩放；页面按屏幕 100% 宽高排版
   document.addEventListener("gesturestart", function (e) { e.preventDefault(); }, false);
-  function fullscreen() {
-    var el = document.documentElement;
-    var f = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitRequestFullScreen ||
-            el.mozRequestFullScreen || el.msRequestFullscreen;
-    try { if (f) f.call(el); } catch (e) {}
-    window.scrollTo(0, 1);
+  function fit() {
+    var de = document.documentElement;
+    var W = window.innerWidth || de.clientWidth, H = window.innerHeight || de.clientHeight;
+    $("wrap").style.height = H + "px";
+    // 固定部分（输入栏、提示、按钮）约 210px，剩余给田字格和笔顺缩略图
+    var size = Math.min(W - 16, Math.max(240, H - 210 - 200));
+    var b = $("board");
+    b.style.width = b.style.height = (size - 4) + "px";
+    var st = $("steps");
+    st.style.height = Math.max(0, H - st.offsetTop - 4) + "px";
+    window.scrollTo(0, 0);
   }
-  window.onload = function () { setTimeout(function () { window.scrollTo(0, 1); }, 100); };
+  window.onload = fit;
+  window.onresize = fit;
+  window.onorientationchange = fit;
 
-  $("go").onclick = function () { fullscreen(); go(); };
-  $("txt").onkeydown = function (e) { if ((e.keyCode || e.which) === 13) go(); };
+  function submit() { $("txt").blur(); window.scrollTo(0, 0); go(); fit(); }
+  $("go").onclick = submit;
+  // 回车与“显示”按钮功能一致
+  $("txt").onkeydown = function (e) {
+    if ((e.keyCode || e.which) === 13) {
+      if (e.preventDefault) e.preventDefault();
+      submit();
+      return false;
+    }
+  };
+  // 键盘弹出/收起后把页面复位，避免画面被推走或放大
+  $("txt").onfocus = function () { window.scrollTo(0, 0); };
+  $("txt").onblur = function () { window.scrollTo(0, 0); };
   $("chars").onclick = function (e) {
     var t = e.target || e.srcElement;
     if (t && t.getAttribute && t.getAttribute("data-i") !== null)
