@@ -13,6 +13,7 @@
   #wrap { width: 100%; height: 100%; overflow: hidden; padding: 4px 0; text-align: center;
     box-sizing: border-box; }
   html { -webkit-text-size-adjust: none; }
+  #dbg { position: absolute; left: 4px; bottom: 2px; font: 12px monospace; color: #666; }
   form { margin: 0; padding: 0; }
   #bar input, #bar button { box-sizing: border-box; height: 48px; margin: 0 2px;
     vertical-align: middle; font-size: 26px; border: 2px solid #000; }
@@ -51,6 +52,7 @@
     <button id="outline">描红：开</button>
   </div>
   <div id="steps"></div>
+  <div id="dbg"></div>
 </div>
 
 <script>
@@ -233,11 +235,11 @@
     window.scrollTo(0, 0);
   }
   window.onload = function () {
-    fit();
+    fit(); debug();
     var m = /[?&]q=([^&]*)/.exec(location.search);
     if (m) { $("txt").value = decodeURIComponent(m[1]); go(); fit(); }
   };
-  window.onresize = fit;
+  window.onresize = function () { fit(); debug(); };
   window.onorientationchange = fit;
 
   function isZoomed() {
@@ -257,15 +259,21 @@
     window.scrollTo(0, 0);
   }
 
+  // 临时诊断：显示当前窗口/屏幕尺寸，用于判断 Kindle 缩放时这些值是否变化
+  function debug() {
+    var vv = window.visualViewport;
+    $("dbg").innerHTML = "inner " + window.innerWidth + "x" + window.innerHeight +
+      " outer " + window.outerWidth + "x" + window.outerHeight +
+      " screen " + screen.width + "x" + screen.height +
+      " dpr " + window.devicePixelRatio +
+      " vv " + (vv ? vv.scale + "/" + vv.width : "-") +
+      " base " + baseW;
+  }
+
   function submit() {
     $("txt").blur();
     resetZoom();
-    var q = $("txt").value;
-    if (q && isZoomed()) {
-      location.replace(location.pathname + "?q=" + encodeURIComponent(q));
-      return;
-    }
-    go(); fit();
+    go(); fit(); debug();
   }
   $("go").onclick = submit;
   // 回车与“显示”按钮功能一致
